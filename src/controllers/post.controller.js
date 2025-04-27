@@ -1,24 +1,26 @@
 import { successResponse, errorResponse } from "../utils/ApiResponse.util.js";
 import Post from "../models/post.model.js";
+import Comment from "../models/comments.model.js";
 import slugify from "slugify";
 
 export const createPost = async (req, res) => {
   const { title, content, coverImage, tags, category } = req.body;
 
-  const author = req.user._id; // Assuming you have user info in req.user
+  const author = req.user.id; // Assuming req.user is populated with the authenticated user's data
+
   const published = false; // Default to false when creating a post
   const publishedAt = null; // Default to null when creating a post
 
-  if (!title || !slug || !content) {
-    return errorResponse(res, 400, "Title, slug, and content are required");
-  }
-
   const slug = slugify(title, { lower: true, strict: true });
+
+  if (!title || !slug || !content) {
+    return errorResponse(res, null, "Title, slug, and content are required");
+  }
 
   try {
     const existingPost = await Post.findOne({ slug });
     if (existingPost) {
-      return errorResponse(res, 400, "A post with this slug already exists");
+      return errorResponse(res, null, "A post with this slug already exists");
     }
 
     const newPost = new Post({
@@ -35,9 +37,9 @@ export const createPost = async (req, res) => {
 
     await newPost.save();
 
-    return successResponse(res, 201, "Post created successfully", newPost);
+    return successResponse(res, newPost, "Post created successfully", 201);
   } catch (error) {
-    return errorResponse(res, 500, "Internal Server Error", error.message);
+    return errorResponse(res, error, error.message);
   }
 };
 
@@ -46,24 +48,43 @@ export const getPosts = async (req, res) => {
     const posts = await Post.find()
       .populate("author", "name email username profilePicture")
       .sort({ createdAt: -1 });
-    return successResponse(res, 200, "Posts retrieved successfully", posts);
+    return successResponse(res, posts, "Posts retrieved successfully", 200);
   } catch (error) {
-    return errorResponse(res, 500, "Internal Server Error", error.message);
+    return errorResponse(res, error.message, "Internal Server Error", 500);
   }
 };
 
 export const getPostById = async (req, res) => {
+  console.log(req.user);
   try {
     const post = await Post.findById(req.params.id)
       .populate("author", "name email username profilePicture")
-      .populate("comments.author", "name email username profilePicture")
       .sort({ createdAt: -1 });
     if (!post) {
-      return errorResponse(res, 404, "Post not found");
+      return errorResponse(res, null, "Post not found", 404);
     }
-    return successResponse(res, 200, "Post retrieved successfully", post);
+
+    // Check if the post is published or if the user is the author
+    if (
+      !post.published &&
+      post.author._id.toString() !== req.user.id.toString()
+    ) {
+      return errorResponse(res, null, "Post not found", 404);
+    }
+
+    const postId = post._id.toString(); // Get the post ID
+    const comments = await Comment.find({ post: postId })
+      .populate("user", "profilePicture name username")
+      .sort({ createdAt: -1 })
+      .lean();
+    console.log(comments);
+
+    const finalPost = post.toObject(); // Convert Mongoose document to plain object
+    finalPost.comments = comments; // Add comments to the post object
+
+    return successResponse(res, finalPost, "Post retrieved successfully", 200);
   } catch (error) {
-    return errorResponse(res, 500, "Internal Server Error", error.message);
+    return errorResponse(res, error.message, "Internal Server Error", 500);
   }
 };
 

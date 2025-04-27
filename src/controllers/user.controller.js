@@ -69,7 +69,7 @@ export const loginUser = async (req, res) => {
       );
     }
 
-    const payload = { id: user._id, email: user.email };
+    const payload = user._id.toString(); // Use user ID as payload
     const accessToken = generateAccessToken(payload, { expiresIn: "15m" });
     const refreshToken = generateRefreshToken(payload, { expiresIn: "7d" });
 
@@ -89,6 +89,12 @@ export const loginUser = async (req, res) => {
       sameSite: "Strict",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
+
+    // Send access token in response body
+
+    res.setHeader("Authorization", `Bearer ${accessToken}`);
+    res.setHeader("Access-Control-Expose-Headers", "Authorization");
+    res.setHeader("Access-Control-Allow-Credentials", "true");
 
     return successResponse(
       res,

@@ -15,7 +15,6 @@ const postSchema = new mongoose.Schema(
     category: { type: String }, // optional category field
     published: { type: Boolean, default: false },
     publishedAt: { type: Date }, // when published
-    
   },
   { timestamps: true }
 );
