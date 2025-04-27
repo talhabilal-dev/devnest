@@ -6,9 +6,15 @@ import {
   generateRefreshToken,
   verifyToken,
 } from "../utils/token.util.js";
+import {
+  cloudinaryUpload,
+  deleteFileFromCloudinary,
+} from "../utils/cloudinary.js";
 
 export const registerUser = async (req, res) => {
   const { name, username, email, password } = req.body;
+
+  let profilePictureUrl = null;
 
   if (!name || !username || !email || !password) {
     return errorResponse(
@@ -19,6 +25,33 @@ export const registerUser = async (req, res) => {
     );
   }
   try {
+    const profilePictureLocalPath = req.file.path;
+
+    if (!profilePictureLocalPath) {
+      return errorResponse(
+        res,
+        new Error("Missing required fields"),
+        "Please provide profile picture",
+        400
+      );
+    }
+
+    const { secure_url, public_id } = await cloudinaryUpload(
+      profilePictureLocalPath,
+      {
+        folder: "profile_pictures",
+      }
+    );
+
+    if (!secure_url) {
+      return errorResponse(
+        res,
+        new Error("Error uploading profile picture"),
+        "Error uploading profile picture",
+        500
+      );
+    }
+
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return errorResponse(
@@ -31,7 +64,13 @@ export const registerUser = async (req, res) => {
 
     const hashedPassword = await hashPassword(password);
 
-    const user = new User({ name, username, email, password: hashedPassword });
+    const user = new User({
+      name,
+      username,
+      email,
+      password: hashedPassword,
+      profilePicture: secure_url,
+    });
     await user.save();
 
     return successResponse(
@@ -41,6 +80,10 @@ export const registerUser = async (req, res) => {
       201
     );
   } catch (err) {
+    if (publicId) {
+      await deleteFileFromCloudinary(publicId, "image");
+    }
+
     return errorResponse(res, err, "Registration failed");
   }
 };
@@ -69,18 +112,22 @@ export const loginUser = async (req, res) => {
       );
     }
 
-    const payload = user._id.toString(); // Use user ID as payload
+    const payload = user._id.toString();
     const accessToken = generateAccessToken(payload, { expiresIn: "15m" });
     const refreshToken = generateRefreshToken(payload, { expiresIn: "7d" });
 
-    // Optional: Save refresh token in DB or Redis for invalidation
-
-    // const updatedUser = await User.updateOne({ _id: user._id }, { refreshToken });
-    // if (updatedUser.modifiedCount === 0) {
-    //   return errorResponse(res, new Error("Failed to save refresh token"), "Internal server error", 500);
-    // }
-    // Uncomment the above lines and add refreshToken field to User model
-    // if you want to store refresh token in DB
+    const updatedUser = await User.updateOne(
+      { _id: user._id },
+      { refreshToken }
+    );
+    if (updatedUser.modifiedCount === 0) {
+      return errorResponse(
+        res,
+        new Error("Failed to save refresh token"),
+        "Internal server error",
+        500
+      );
+    }
 
     // Set refresh token as http-only cookie
     res.cookie("refreshToken", refreshToken, {

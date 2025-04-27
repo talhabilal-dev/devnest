@@ -1,6 +1,6 @@
 import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
-import ENV from "../config/env.config";
+import ENV from "../config/env.config.js";
 
 cloudinary.config({
   cloud_name: ENV.CLOUDINARY_CLOUD_NAME,
@@ -8,11 +8,15 @@ cloudinary.config({
   api_secret: ENV.CLOUDINARY_API_SECRET,
 });
 
-export const cloudinaryUpload = async (localFilePath) => {
+export const cloudinaryUpload = async (
+  localFilePath,
+  folder = "profile_pictures"
+) => {
   try {
     const response = await cloudinary.uploader.upload(localFilePath, {
       resource_type: "auto",
       transformation: [{ quality: "auto" }, { format: "auto" }],
+      folder: folder,
     });
     fs.unlinkSync(localFilePath);
     return response;
