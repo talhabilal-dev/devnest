@@ -14,8 +14,6 @@ import {
 export const registerUser = async (req, res) => {
   const { name, username, email, password } = req.body;
 
-  let profilePictureUrl = null;
-
   if (!name || !username || !email || !password) {
     return errorResponse(
       res,
