@@ -190,3 +190,104 @@ export const logoutUser = (req, res) => {
 
   return successResponse(res, null, "Successfully logged out");
 };
+
+export const getUserProfile = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const user = await User.findById(userId).select("-password -refreshToken");
+
+    if (!user) {
+      return errorResponse(
+        res,
+        new Error("User not found"),
+        "User not found",
+        404
+      );
+    }
+
+    return successResponse(res, user, "User profile retrieved successfully");
+  } catch (err) {
+    return errorResponse(res, err, "Failed to retrieve user profile", 500);
+  }
+};
+export const updateUserProfile = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { name, username, email } = req.body;
+
+    if (!name || !username || !email) {
+      return errorResponse(
+        res,
+        new Error("Missing required fields"),
+        "Please provide all required fields",
+        400
+      );
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { name, username, email },
+      { new: true }
+    ).select("-password -refreshToken");
+
+    if (!updatedUser) {
+      return errorResponse(
+        res,
+        new Error("User not found"),
+        "User not found",
+        404
+      );
+    }
+
+    return successResponse(
+      res,
+      updatedUser,
+      "User profile updated successfully"
+    );
+  } catch (err) {
+    return errorResponse(res, err, "Failed to update user profile", 500);
+  }
+};
+
+export const deleteUserProfile = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const deletedUser = await User.findByIdAndDelete(userId).select(
+      "-password -refreshToken"
+    );
+
+    if (!deletedUser) {
+      return errorResponse(
+        res,
+        new Error("User not found"),
+        "User not found",
+        404
+      );
+    }
+
+    return successResponse(res, null, "User profile deleted successfully");
+  } catch (err) {
+    return errorResponse(res, err, "Failed to delete user profile", 500);
+  }
+};
+
+export const checkUsernameAvailability = async (req, res) => {
+  const { username } = req.params;
+
+  try {
+    const user = await User.findOne({ username });
+    if (user) {
+      return successResponse(res, null, "Username is available", 200);
+    } else {
+      return successResponse(res, null, "Username is not available", 200);
+    }
+  } catch (err) {
+    return errorResponse(
+      res,
+      err,
+      "Failed to check username availability",
+      500
+    );
+  }
+};
