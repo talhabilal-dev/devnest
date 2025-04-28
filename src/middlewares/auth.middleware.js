@@ -33,4 +33,34 @@ const authMiddleware = (req, res, next) => {
   }
 };
 
-export default authMiddleware;
+const authMiddlewareWithRole = (role) => {
+  return (req, res, next) => {
+    authMiddleware(req, res, () => {
+      if (req.user.role !== role) {
+        return errorResponse(
+          res,
+          new Error("Forbidden"),
+          "You do not have permission to access this resource",
+          403
+        );
+      }
+      next();
+    });
+  };
+};
+
+const verifyEmail = (req, res, next) => {
+  authMiddleware(req, res, () => {
+    if (!req.user.isEmailVerified) {
+      return errorResponse(
+        res,
+        new Error("Email not verified"),
+        "Please verify your email address",
+        401
+      );
+    }
+    next();
+  });
+};
+
+export { authMiddleware, authMiddlewareWithRole };

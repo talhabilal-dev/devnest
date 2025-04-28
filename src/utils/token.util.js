@@ -1,14 +1,18 @@
 import jwt from "jsonwebtoken";
 import ENV from "../config/env.config.js";
 
-const generateAccessToken = (userId, options) => {
+const generateAccessToken = (userId, role, isVerified, options) => {
   const payload = { id: userId };
+  if (role) payload.role = role;
+  if (isVerified) payload.isVerified = isVerified;
   const secret = ENV.ACCESS_TOKEN_SECRET;
   return jwt.sign(payload, secret, options);
 };
 
-const generateRefreshToken = (userId, options) => {
+const generateRefreshToken = (userId, role, isVerified, optionss) => {
   const payload = { id: userId };
+  if (role) payload.role = role;
+  if (isVerified) payload.isVerified = isVerified;
   const secret = ENV.REFRESH_TOKEN_SECRET;
   return jwt.sign(payload, secret, options);
 };
@@ -38,5 +42,5 @@ export {
   generateRefreshToken,
   verifyToken,
   generatePasswordResetToken,
-  generateVerificationToken
+  generateVerificationToken,
 };

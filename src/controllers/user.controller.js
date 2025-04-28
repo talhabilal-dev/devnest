@@ -115,9 +115,19 @@ export const loginUser = async (req, res) => {
       );
     }
 
-    const payload = user._id.toString();
-    const accessToken = generateAccessToken(payload, { expiresIn: "15m" });
-    const refreshToken = generateRefreshToken(payload, { expiresIn: "7d" });
+    const userId = user._id.toString();
+    const accessToken = generateAccessToken(
+      userId,
+      user.role,
+      user.isVerified,
+      { expiresIn: "15m" }
+    );
+    const refreshToken = generateRefreshToken(
+      userId,
+      user.role,
+      user.isVerified,
+      { expiresIn: "7d" }
+    );
 
     const updatedUser = await User.updateOne(
       { _id: user._id },
@@ -171,9 +181,14 @@ export const refreshToken = async (req, res) => {
 
     const decoded = verifyToken(refreshToken, process.env.REFRESH_TOKEN_SECRET);
 
-    const newAccessToken = generateAccessToken(decoded.id, {
-      expiresIn: "15m",
-    });
+    const newAccessToken = generateAccessToken(
+      decoded.id,
+      decoded.role,
+      decoded.isVerified,
+      {
+        expiresIn: "15m",
+      }
+    );
 
     return successResponse(
       res,
