@@ -68,23 +68,55 @@ export const createPost = async (req, res) => {
 
 export const getPosts = async (req, res) => {
   try {
+    const userId = req.user._id; // Assuming the user is authenticated, and their ID is stored in the request (e.g., from a JWT)
+
+    // Get posts
     const posts = await Post.find()
       .populate("author", "name email username profilePicture")
       .sort({ createdAt: -1 });
-    return successResponse(res, posts, "Posts retrieved successfully", 200);
+
+    // If no posts found, return error
+    if (!posts || posts.length === 0) {
+      return errorResponse(res, null, "No posts found", 404);
+    }
+
+    // Filter posts
+    const filteredPosts = posts
+      .map((post) => {
+        if (post.author.toString() === userId.toString() || post.published) {
+          // Show all posts for the author or if the post is published
+          const { views, ...restOfPost } = post.toObject(); // Remove views field
+          return restOfPost;
+        }
+        // If the user is not the author and post is not published, hide the post
+        return null;
+      })
+      .filter((post) => post !== null); // Remove null values (non-published posts for non-authors)
+
+    // Return filtered posts
+    return successResponse(
+      res,
+      filteredPosts,
+      "Posts retrieved successfully",
+      200
+    );
   } catch (error) {
     return errorResponse(res, error.message, "Internal Server Error", 500);
   }
 };
 
 export const getPostById = async (req, res) => {
-  console.log(req.user);
   try {
     const post = await Post.findById(req.params.id)
       .populate("author", "name email username profilePicture")
       .sort({ createdAt: -1 });
     if (!post) {
       return errorResponse(res, null, "Post not found", 404);
+    }
+    // Increment the view count if the post is published
+    if (post.published) {
+      post.views += 1;
+      await post.save();
     }
 
     // Check if the post is published or if the user is the author

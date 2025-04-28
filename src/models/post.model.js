@@ -12,6 +12,7 @@ const postSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    views: { type: Number, default: 0 },
     likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     tags: [{ type: String }], // optional tags
     category: { type: String }, // optional category field

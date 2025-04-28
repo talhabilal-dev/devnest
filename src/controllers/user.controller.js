@@ -120,6 +120,47 @@ export const registerUser = async (req, res) => {
 export const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
+  if (!email || !password) {
+    return errorResponse(
+      res,
+      new Error("Missing required fields"),
+      "Please provide all required fields",
+      400
+    );
+  }
+  // if (!email.includes("@")) {
+  //   return errorResponse(
+  //     res,
+  //     new Error("Invalid email format"),
+  //     "Please provide a valid email",
+  //     400
+  //   );
+  // }
+  // if (password.length < 6) {
+  //   return errorResponse(
+  //     res,
+  //     new Error("Password too short"),
+  //     "Password must be at least 6 characters long",
+  //     400
+  //   );
+  // }
+  // if (password.length > 20) {
+  //   return errorResponse(
+  //     res,
+  //     new Error("Password too long"),
+  //     "Password must be at most 20 characters long",
+  //     400
+  //   );
+  // }
+  // if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,20}$/.test(password)) {
+  //   return errorResponse(
+  //     res,
+  //     new Error("Weak password"),
+  //     "Password must contain at least one uppercase letter, one lowercase letter, and one number",
+  //     400
+  //   );
+  // }
+
   try {
     const user = await User.findOne({ email });
     if (!user) {
@@ -158,7 +199,7 @@ export const loginUser = async (req, res) => {
     const updatedUser = await User.updateOne(
       { _id: user._id },
       { refreshToken }
-    );
+    ).select("-password");
     if (updatedUser.modifiedCount === 0) {
       return errorResponse(
         res,
@@ -182,10 +223,15 @@ export const loginUser = async (req, res) => {
     res.setHeader("Access-Control-Expose-Headers", "Authorization");
     res.setHeader("Access-Control-Allow-Credentials", "true");
 
+    const finalUser = await User.findById(userId).select(
+      "-password -refreshToken -verificationToken -verificationTokenExpiry -forgetPasswordToken -forgetPasswordTokenExpiry -profilePicturePublicId "
+    );
+
     return successResponse(
       res,
-      { accessToken, refreshToken },
-      "Login successful"
+      { accessToken, refreshToken, user: finalUser },
+      "Login successful",
+      200
     );
   } catch (err) {
     return errorResponse(res, err, "Login failed");
