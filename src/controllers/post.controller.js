@@ -10,9 +10,9 @@ import {
 export const createPost = async (req, res) => {
   const { title, content, tags, category } = req.body;
 
-  const author = req.user.id; // Assuming req.user is populated with the authenticated user's data
+  const author = req.user.id;
 
-  const coverImage = req.file ? req.file.path : null; // Assuming you're using multer for file uploads
+  const coverImage = req.file ? req.file.path : null;
 
   if (!coverImage) {
     return errorResponse(res, null, "Cover image is required", 400);
@@ -114,8 +114,8 @@ export const getPostById = async (req, res) => {
 export const updatePost = async (req, res) => {
   const { id } = req.params; // post ID from URL
   const { title, content, coverImage, tags, category, published } = req.body;
-  const author = req.user._id;
 
+  const userId = req.user.id; // user ID from token
   try {
     const post = await Post.findById(id);
     if (!post) {

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import {authMiddleware ,verifyEmail} from "../middlewares/auth.middleware.js";
+import { authMiddleware, verifyEmail } from "../middlewares/auth.middleware.js";
 
 import { createComment } from "../controllers/comment.controller.js";
 

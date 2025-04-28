@@ -17,7 +17,7 @@ import {
 
 export const registerUser = async (req, res) => {
   const { name, username, email, password } = req.body;
-
+  let publicId = null;
   if (!name || !username || !email || !password) {
     return errorResponse(
       res,
@@ -38,14 +38,12 @@ export const registerUser = async (req, res) => {
       );
     }
 
-    const { secure_url, public_id } = await cloudinaryUpload(
-      profilePictureLocalPath,
-      {
-        folder: "profile_pictures",
-      }
-    );
-
-    if (!secure_url) {
+    const { secure_url } = await cloudinaryUpload(profilePictureLocalPath, {
+      folder: "profile_pictures",
+    });
+    if (secure_url) {
+      publicId = secure_url.split("/").slice(-2, -1)[0]; // Extract public ID from URL
+    } else {
       return errorResponse(
         res,
         new Error("Error uploading profile picture"),
@@ -73,6 +71,34 @@ export const registerUser = async (req, res) => {
       password: hashedPassword,
       profilePicture: secure_url,
     });
+
+    const verificationToken = generateVerificationToken(user._id.toString(), {
+      expiresIn: "1d",
+    });
+
+    const verificationUrl = `${ENV.CLIENT_URL}/verify-email/${verificationToken}`;
+
+    const title = "Email Verification";
+    const message = `Please verify your email by clicking the link below: ${verificationUrl}`;
+    const buttonText = "Verify Email";
+    const response = await sendEmail({
+      to: user.email,
+      subject: title,
+      title,
+      message,
+      buttonText,
+      buttonUrl: verificationUrl,
+    });
+    if (response.error) {
+      return errorResponse(
+        res,
+        new Error("Failed to send verification email"),
+        "Failed to send verification email",
+        500
+      );
+    }
+    user.verificationToken = verificationToken;
+    user.verificationTokenExpiry = Date.now() + 24 * 60 * 60 * 1000; // 1 day
 
     await user.save();
 

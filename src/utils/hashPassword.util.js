@@ -5,7 +5,7 @@ async function hashPassword(password) {
     const hashedPassword = await argon2.hash(password);
     return hashedPassword;
   } catch (err) {
-    throw new Error("Error hashing password");
+    throw new Error("Error hashing password" + err.message);
   }
 }
 

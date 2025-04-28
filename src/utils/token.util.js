@@ -9,7 +9,7 @@ const generateAccessToken = (userId, role, isVerified, options) => {
   return jwt.sign(payload, secret, options);
 };
 
-const generateRefreshToken = (userId, role, isVerified, optionss) => {
+const generateRefreshToken = (userId, role, isVerified, options) => {
   const payload = { id: userId };
   if (role) payload.role = role;
   if (isVerified) payload.isVerified = isVerified;
@@ -21,7 +21,7 @@ const verifyToken = (token, secret) => {
   try {
     return jwt.verify(token, secret);
   } catch (err) {
-    throw new Error("Token verification failed");
+    throw new Error("Token verification failed" + err.message);
   }
 };
 
