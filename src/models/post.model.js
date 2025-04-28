@@ -6,6 +6,7 @@ const postSchema = new mongoose.Schema(
     slug: { type: String, required: true, unique: true }, // For SEO URLs
     content: { type: String, required: true },
     coverImage: { type: String }, // optional blog thumbnail
+    coverImagePublicId: { type: String }, // optional blog thumbnail public id for cloudinary
     author: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

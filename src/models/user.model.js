@@ -23,6 +23,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: null,
   },
+  profilePicturePublicId: {
+    type: String,
+    default: null,
+  },
   bio: {
     type: String,
     default: null,

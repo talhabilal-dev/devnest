@@ -7,12 +7,13 @@ import {
   updatePost,
   deletePost,
 } from "../controllers/post.controller.js";
+import { upload } from "../middlewares/multer.middleware.js";
 
 const router = Router();
 
 router.use(authMiddleware);
 
-router.post("/", createPost);
+router.post("/",upload.single("coverImage"), createPost);
 router.get("/", getPosts);
 router.get("/:id", getPostById);
 router.put("/:id", updatePost);

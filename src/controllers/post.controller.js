@@ -2,11 +2,29 @@ import { successResponse, errorResponse } from "../utils/ApiResponse.util.js";
 import Post from "../models/post.model.js";
 import Comment from "../models/comments.model.js";
 import slugify from "slugify";
+import {
+  cloudinaryUpload,
+  deleteFileFromCloudinary,
+} from "../utils/cloudinary.js";
 
 export const createPost = async (req, res) => {
-  const { title, content, coverImage, tags, category } = req.body;
+  const { title, content, tags, category } = req.body;
 
   const author = req.user.id; // Assuming req.user is populated with the authenticated user's data
+
+  const coverImage = req.file ? req.file.path : null; // Assuming you're using multer for file uploads
+
+  if (!coverImage) {
+    return errorResponse(res, null, "Cover image is required", 400);
+  }
+
+  const imageUploadResult = await cloudinaryUpload(coverImage);
+  if (imageUploadResult.error) {
+    return errorResponse(res, null, imageUploadResult.error.message, 400);
+  }
+
+  const imageUrl = imageUploadResult.secure_url;
+  const imagePublicId = imageUploadResult.public_id;
 
   const published = false; // Default to false when creating a post
   const publishedAt = null; // Default to null when creating a post
@@ -27,7 +45,8 @@ export const createPost = async (req, res) => {
       title,
       slug,
       content,
-      coverImage,
+      coverImage: imageUrl,
+      coverImagePublicId: imagePublicId,
       author,
       tags,
       category,
@@ -39,6 +58,10 @@ export const createPost = async (req, res) => {
 
     return successResponse(res, newPost, "Post created successfully", 201);
   } catch (error) {
+    // If there's an error during post creation, delete the uploaded image from Cloudinary
+    if (imagePublicId) {
+      await deleteFileFromCloudinary(imagePublicId);
+    }
     return errorResponse(res, error, error.message);
   }
 };
