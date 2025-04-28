@@ -15,10 +15,28 @@ const generateRefreshToken = (userId, options) => {
 
 const verifyToken = (token, secret) => {
   try {
-    return jwt.verify(token, secret );
+    return jwt.verify(token, secret);
   } catch (err) {
     throw new Error("Token verification failed");
   }
 };
 
-export { generateAccessToken, generateRefreshToken, verifyToken };
+const generatePasswordResetToken = (userId, options) => {
+  const payload = { id: userId };
+  const secret = ENV.PASSWORD_RESET_TOKEN_SECRET;
+  return jwt.sign(payload, secret, options);
+};
+
+const generateVerificationToken = (userId, options) => {
+  const payload = { id: userId };
+  const secret = ENV.VERIFICATION_TOKEN_SECRET;
+  return jwt.sign(payload, secret, options);
+};
+
+export {
+  generateAccessToken,
+  generateRefreshToken,
+  verifyToken,
+  generatePasswordResetToken,
+  generateVerificationToken
+};

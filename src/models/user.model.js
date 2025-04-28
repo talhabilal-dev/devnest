@@ -37,6 +37,30 @@ const userSchema = new mongoose.Schema({
     required: true,
     minlength: 6,
   },
+  favouritePosts: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Post",
+    },
+  ],
+  likedPosts: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Post",
+    },
+  ],
+  forgetPasswordToken: {
+    type: String,
+    default: null,
+  },
+  forgetPasswordTokenExpiry: {
+    type: Date,
+    default: null,
+  },
+  isVerified: {
+    type: Boolean,
+    default: false,
+  },
   refreshToken: {
     type: String,
     default: null,

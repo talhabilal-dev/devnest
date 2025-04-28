@@ -5,7 +5,11 @@ import {
   generateAccessToken,
   generateRefreshToken,
   verifyToken,
+  generatePasswordResetToken,
+  generateVerificationToken,
 } from "../utils/token.util.js";
+import ENV from "../config/env.config.js";
+import { sendEmail } from "../utils/email.util.js";
 import {
   cloudinaryUpload,
   deleteFileFromCloudinary,
@@ -69,6 +73,7 @@ export const registerUser = async (req, res) => {
       password: hashedPassword,
       profilePicture: secure_url,
     });
+
     await user.save();
 
     return successResponse(
@@ -289,5 +294,155 @@ export const checkUsernameAvailability = async (req, res) => {
       "Failed to check username availability",
       500
     );
+  }
+};
+
+export const forgetPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return errorResponse(
+        res,
+        new Error("User not found"),
+        "User not found",
+        404
+      );
+    }
+    const token = generatePasswordResetToken(user._id.toString(), {
+      expiresIn: "15m",
+    });
+
+    // Send email with the token
+    const resetUrl = `${ENV.CLIENT_URL}/reset-password/${token}`;
+    const title = "Password Reset Request";
+    const message = `You requested a password reset. Click the link below to reset your password: ${resetUrl}`;
+    const buttonText = "Reset Password";
+    const response = await sendEmail({
+      to: user.email,
+      subject: "Password Reset",
+      title,
+      message,
+      buttonText,
+      buttonUrl: resetUrl,
+    });
+
+    if (response.error) {
+      return errorResponse(
+        res,
+        new Error("Failed to send email"),
+        "Failed to send password reset email",
+        500
+      );
+    }
+    // Save the token to the user document
+
+    user.forgetPasswordToken = token;
+    user.forgetPasswordTokenExpiry = Date.now() + 15 * 60 * 1000; // 15 minutes
+    await user.save();
+
+    return successResponse(res, null, "Password reset email sent successfully");
+  } catch (err) {
+    return errorResponse(res, err, "Failed to send password reset email", 500);
+  }
+};
+
+export const resetPassword = async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) {
+      return errorResponse(
+        res,
+        new Error("Missing required fields"),
+        "Please provide all required fields",
+        400
+      );
+    }
+
+    const decoded = verifyToken(token, ENV.PASSWORD_RESET_TOKEN_SECRET);
+
+    if (!decoded) {
+      return errorResponse(
+        res,
+        new Error("Invalid or expired token"),
+        "Invalid or expired token",
+        400
+      );
+    }
+
+    const user = await User.findById(decoded.id);
+
+    if (!user) {
+      return errorResponse(
+        res,
+        new Error("User not found"),
+        "User not found",
+        404
+      );
+    }
+
+    if (user.forgetPasswordToken !== token) {
+      return errorResponse(
+        res,
+        new Error("Invalid or expired token"),
+        "Invalid or expired token",
+        400
+      );
+    }
+
+    user.password = await hashPassword(newPassword);
+    user.forgetPasswordToken = undefined;
+    user.forgetPasswordTokenExpiry = undefined;
+    await user.save();
+
+    return successResponse(res, null, "Password reset successfully");
+  } catch (err) {
+    return errorResponse(res, err, "Failed to reset password", 500);
+  }
+};
+export const verifyEmail = async (req, res) => {
+  try {
+    const { token } = req.params;
+
+    if (!token) {
+      return errorResponse(
+        res,
+        new Error("Missing required fields"),
+        "Please provide all required fields",
+        400
+      );
+    }
+
+    const decoded = verifyToken(token, ENV.VERIFICATION_TOKEN_SECRET);
+
+    if (!decoded) {
+      return errorResponse(
+        res,
+        new Error("Invalid or expired token"),
+        "Invalid or expired token",
+        400
+      );
+    }
+
+    const user = await User.findById(decoded.id);
+
+    if (!user) {
+      return errorResponse(
+        res,
+        new Error("User not found"),
+        "User not found",
+        404
+      );
+    }
+
+    user.isVerified = true;
+    await user.save();
+
+    return successResponse(res, null, "Email verified successfully");
+  } catch (err) {
+    return errorResponse(res, err, "Failed to verify email", 500);
   }
 };

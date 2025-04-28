@@ -4,6 +4,9 @@ import {
   loginUser,
   refreshToken,
   logoutUser,
+  forgetPassword,
+  verifyEmail,
+  resetPassword,
 } from "../controllers/user.controller.js";
 import authMiddleware from "../middlewares/auth.middleware.js";
 import { getResponse } from "../controllers/protected.controller.js";
@@ -15,6 +18,8 @@ router.post("/register", upload.single("profilePicture"), registerUser);
 router.post("/login", loginUser);
 router.post("/refresh-token", refreshToken);
 router.post("/logout", logoutUser);
-router.get("/protected-resource", authMiddleware, getResponse);
+router.post("/forget-password", forgetPassword);
+router.post("/verify-email", verifyEmail);
+router.post("/reset-password", resetPassword);
 
 export default router;
