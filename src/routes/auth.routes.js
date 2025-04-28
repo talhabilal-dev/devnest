@@ -7,9 +7,7 @@ import {
   forgetPassword,
   verifyEmail,
   resetPassword,
-} from "../controllers/user.controller.js";
-import authMiddleware from "../middlewares/auth.middleware.js";
-import { getResponse } from "../controllers/protected.controller.js";
+} from "../controllers/user.controller.js";;
 import { upload } from "../middlewares/multer.middleware.js";
 
 const router = Router();

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import authMiddleware from "../middlewares/auth.middleware.js";
+import {authMiddleware ,verifyEmail} from "../middlewares/auth.middleware.js";
 import {
   createPost,
   getPosts,
@@ -12,6 +12,7 @@ import { upload } from "../middlewares/multer.middleware.js";
 const router = Router();
 
 router.use(authMiddleware);
+router.use(verifyEmail);
 
 router.post("/",upload.single("coverImage"), createPost);
 router.get("/", getPosts);
