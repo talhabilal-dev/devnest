@@ -63,4 +63,4 @@ const verifyEmail = (req, res, next) => {
   });
 };
 
-export { authMiddleware, authMiddlewareWithRole };
+export { authMiddleware, authMiddlewareWithRole , verifyEmail };
