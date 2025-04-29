@@ -128,42 +128,42 @@ export const loginUser = async (req, res) => {
       400
     );
   }
-  // if (!email.includes("@")) {
-  //   return errorResponse(
-  //     res,
-  //     new Error("Invalid email format"),
-  //     "Please provide a valid email",
-  //     400
-  //   );
-  // }
-  // if (password.length < 6) {
-  //   return errorResponse(
-  //     res,
-  //     new Error("Password too short"),
-  //     "Password must be at least 6 characters long",
-  //     400
-  //   );
-  // }
-  // if (password.length > 20) {
-  //   return errorResponse(
-  //     res,
-  //     new Error("Password too long"),
-  //     "Password must be at most 20 characters long",
-  //     400
-  //   );
-  // }
-  // if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,20}$/.test(password)) {
-  //   return errorResponse(
-  //     res,
-  //     new Error("Weak password"),
-  //     "Password must contain at least one uppercase letter, one lowercase letter, and one number",
-  //     400
-  //   );
-  // }
+  if (!email.includes("@")) {
+    return errorResponse(
+      res,
+      new Error("Invalid email format"),
+      "Please provide a valid email",
+      400
+    );
+  }
+  if (password.length < 6) {
+    return errorResponse(
+      res,
+      new Error("Password too short"),
+      "Password must be at least 6 characters long",
+      400
+    );
+  }
+  if (password.length > 20) {
+    return errorResponse(
+      res,
+      new Error("Password too long"),
+      "Password must be at most 20 characters long",
+      400
+    );
+  }
+  if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,20}$/.test(password)) {
+    return errorResponse(
+      res,
+      new Error("Weak password"),
+      "Password must contain at least one uppercase letter, one lowercase letter, and one number",
+      400
+    );
+  }
 
   try {
-    const user = await User.findOne({ email });
-    if (!user) {
+    const checkUser = await User.findOne({ email });
+    if (!checkUser) {
       return errorResponse(
         res,
         new Error("User not found"),
@@ -172,7 +172,7 @@ export const loginUser = async (req, res) => {
       );
     }
 
-    const isMatch = await verifyPassword(user.password, password);
+    const isMatch = await verifyPassword(checkUser.password, password);
     if (!isMatch) {
       return errorResponse(
         res,
@@ -182,22 +182,22 @@ export const loginUser = async (req, res) => {
       );
     }
 
-    const userId = user._id.toString();
+    const userId = checkUser._id.toString();
     const accessToken = generateAccessToken(
       userId,
-      user.role,
-      user.isVerified,
+      checkUser.role,
+      checkUser.isVerified,
       { expiresIn: "15m" }
     );
     const refreshToken = generateRefreshToken(
       userId,
-      user.role,
-      user.isVerified,
+      checkUser.role,
+      checkUser.isVerified,
       { expiresIn: "7d" }
     );
 
     const updatedUser = await User.updateOne(
-      { _id: user._id },
+      { _id: checkUser._id },
       { refreshToken }
     ).select("-password");
     if (updatedUser.modifiedCount === 0) {
@@ -217,22 +217,18 @@ export const loginUser = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
-    // Send access token in response body
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
+      maxAge: 15 * 60 * 1000, // 15 minutes
+    });
 
-    res.setHeader("Authorization", `Bearer ${accessToken}`);
-    res.setHeader("Access-Control-Expose-Headers", "Authorization");
-    res.setHeader("Access-Control-Allow-Credentials", "true");
-
-    const finalUser = await User.findById(userId).select(
+    const user = await User.findById(userId).select(
       "-password -refreshToken -verificationToken -verificationTokenExpiry -forgetPasswordToken -forgetPasswordTokenExpiry -profilePicturePublicId "
     );
 
-    return successResponse(
-      res,
-      { accessToken, refreshToken, user: finalUser },
-      "Login successful",
-      200
-    );
+    return successResponse(res, { user, accessToken }, "Login successful", 200);
   } catch (err) {
     return errorResponse(res, err, "Login failed");
   }
@@ -274,6 +270,12 @@ export const refreshToken = async (req, res) => {
 
 export const logoutUser = (req, res) => {
   res.clearCookie("refreshToken", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "Strict",
+    maxAge: 0,
+  });
+  res.clearCookie("accessToken", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "Strict",
