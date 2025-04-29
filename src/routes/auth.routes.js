@@ -7,6 +7,7 @@ import {
   forgetPassword,
   verifyEmail,
   resetPassword,
+  checkUsernameAvailability
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 
@@ -19,5 +20,6 @@ router.post("/logout", logoutUser);
 router.post("/forget-password", forgetPassword);
 router.post("/verify-email", verifyEmail);
 router.post("/reset-password", resetPassword);
+router.post("/check-username/:username", checkUsernameAvailability);
 
 export default router;

@@ -51,17 +51,10 @@ export const registerUser = async (req, res) => {
       400
     );
   }
-  if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,20}$/.test(password)) {
-    return errorResponse(
-      res,
-      new Error("Weak password"),
-      "Password must contain at least one uppercase letter, one lowercase letter, and one number",
-      400
-    );
-  }
 
   try {
     const profilePictureLocalPath = req.file.path;
+    console.log("Profile picture local path:", profilePictureLocalPath);
 
     if (!profilePictureLocalPath) {
       return errorResponse(
@@ -72,11 +65,16 @@ export const registerUser = async (req, res) => {
       );
     }
 
-    const { secure_url } = await cloudinaryUpload(profilePictureLocalPath, {
+    const response1 = await cloudinaryUpload(profilePictureLocalPath, {
       folder: "profile_pictures",
     });
+
+    console.log("Cloudinary response:", response1);
+
+    const { secure_url, public_id } = response1;
+
     if (secure_url) {
-      publicId = secure_url.split("/").slice(-2, -1)[0]; // Extract public ID from URL
+      publicId = public_id // Extract public ID from URL
     } else {
       return errorResponse(
         res,
@@ -104,6 +102,7 @@ export const registerUser = async (req, res) => {
       email,
       password: hashedPassword,
       profilePicture: secure_url,
+      profilePicturePublicId: public_id,
     });
 
     const verificationToken = generateVerificationToken(user._id.toString(), {
@@ -371,12 +370,32 @@ export const deleteUserProfile = async (req, res) => {
 export const checkUsernameAvailability = async (req, res) => {
   const { username } = req.params;
 
+  console.log(username);
+  if (!username) {
+    return errorResponse(
+      res,
+      new Error("Missing required fields"),
+      "Please provide a username",
+      400
+    );
+  }
+
   try {
     const user = await User.findOne({ username });
-    if (user) {
-      return successResponse(res, null, "Username is available", 200);
+    if (!user) {
+      return successResponse(
+        res,
+        { available: true },
+        "Username is available",
+        200
+      );
     } else {
-      return successResponse(res, null, "Username is not available", 200);
+      return successResponse(
+        res,
+        { available: false },
+        "Username is not available",
+        200
+      );
     }
   } catch (err) {
     return errorResponse(
