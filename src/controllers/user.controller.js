@@ -74,7 +74,7 @@ export const registerUser = async (req, res) => {
     const { secure_url, public_id } = response1;
 
     if (secure_url) {
-      publicId = public_id // Extract public ID from URL
+      publicId = public_id; // Extract public ID from URL
     } else {
       return errorResponse(
         res,
@@ -109,7 +109,7 @@ export const registerUser = async (req, res) => {
       expiresIn: "1d",
     });
 
-    const verificationUrl = `${ENV.CLIENT_URL}/verify-email/${verificationToken}`;
+    const verificationUrl = `${ENV.CLIENT_URL}/verify-email?token=${verificationToken}`;
 
     const title = "Email Verification";
     const message = `Please verify your email by clicking the link below: ${verificationUrl}`;
