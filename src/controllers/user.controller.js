@@ -26,6 +26,40 @@ export const registerUser = async (req, res) => {
       400
     );
   }
+
+  if (!email.includes("@")) {
+    return errorResponse(
+      res,
+      new Error("Invalid email format"),
+      "Please provide a valid email",
+      400
+    );
+  }
+  if (password.length < 6) {
+    return errorResponse(
+      res,
+      new Error("Password too short"),
+      "Password must be at least 6 characters long",
+      400
+    );
+  }
+  if (password.length > 20) {
+    return errorResponse(
+      res,
+      new Error("Password too long"),
+      "Password must be at most 20 characters long",
+      400
+    );
+  }
+  if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,20}$/.test(password)) {
+    return errorResponse(
+      res,
+      new Error("Weak password"),
+      "Password must contain at least one uppercase letter, one lowercase letter, and one number",
+      400
+    );
+  }
+
   try {
     const profilePictureLocalPath = req.file.path;
 
@@ -125,38 +159,6 @@ export const loginUser = async (req, res) => {
       res,
       new Error("Missing required fields"),
       "Please provide all required fields",
-      400
-    );
-  }
-  if (!email.includes("@")) {
-    return errorResponse(
-      res,
-      new Error("Invalid email format"),
-      "Please provide a valid email",
-      400
-    );
-  }
-  if (password.length < 6) {
-    return errorResponse(
-      res,
-      new Error("Password too short"),
-      "Password must be at least 6 characters long",
-      400
-    );
-  }
-  if (password.length > 20) {
-    return errorResponse(
-      res,
-      new Error("Password too long"),
-      "Password must be at most 20 characters long",
-      400
-    );
-  }
-  if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,20}$/.test(password)) {
-    return errorResponse(
-      res,
-      new Error("Weak password"),
-      "Password must contain at least one uppercase letter, one lowercase letter, and one number",
       400
     );
   }
