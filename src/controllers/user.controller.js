@@ -259,11 +259,14 @@ export const refreshToken = async (req, res) => {
       }
     );
 
-    return successResponse(
-      res,
-      { accessToken: newAccessToken },
-      "Access token refreshed"
-    );
+    res.cookie("accessToken", newAccessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
+      maxAge: 15 * 60 * 1000, // 15 minutes
+    });
+
+    return successResponse(res, null, "Access token refreshed");
   } catch (err) {
     return errorResponse(res, err, "Failed to refresh access token", 500);
   }
@@ -289,7 +292,48 @@ export const logoutUser = (req, res) => {
 export const getUserProfile = async (req, res) => {
   try {
     const userId = req.user.id;
-    const user = await User.findById(userId).select("-password -refreshToken");
+
+    const userProfile = await User.aggregate([
+      {
+        $match: { _id: new mongoose.Types.ObjectId(userId) },
+      },
+      {
+        $lookup: {
+          from: "posts",
+          localField: "_id",
+          foreignField: "userId",
+          as: "posts",
+        },
+      },
+      {
+        $lookup: {
+          from: "comments",
+          localField: "_id",
+          foreignField: "userId",
+          as: "comments",
+        },
+      },
+      {
+        $addFields: {
+          totalViews: { $sum: "$posts.views" },
+          totalLikes: { $sum: "$posts.likes" },
+          totalComments: { $size: "$comments" },
+        },
+      },
+      {
+        $project: {
+          name: 1,
+          username: 1,
+          email: 1,
+          profilePicture: 1,
+          totalViews: 1,
+          totalLikes: 1,
+          totalComments: 1,
+        },
+      },
+    ]);
+
+    const user = userProfile[0];
 
     if (!user) {
       return errorResponse(

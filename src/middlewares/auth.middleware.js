@@ -3,7 +3,10 @@ import { verifyToken } from "../utils/token.util.js";
 import ENV from "../config/env.config.js";
 
 const authMiddleware = (req, res, next) => {
-  const token = req.header("Authorization")?.replace("Bearer ", "");
+  const token = req.cookies.accessToken || req.headers["authorization"];
+  if (token && token.startsWith("Bearer ")) {
+    token = token.split(" ")[1];
+  }
 
   if (!token) {
     return errorResponse(
