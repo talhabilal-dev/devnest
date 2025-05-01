@@ -1,6 +1,7 @@
 import User from "../models/user.model.js";
 import { hashPassword, verifyPassword } from "../utils/hashPassword.util.js";
 import { successResponse, errorResponse } from "../utils/ApiResponse.util.js";
+import mongoose from "mongoose";
 import {
   generateAccessToken,
   generateRefreshToken,
@@ -318,6 +319,7 @@ export const getUserProfile = async (req, res) => {
           totalViews: { $sum: "$posts.views" },
           totalLikes: { $sum: "$posts.likes" },
           totalComments: { $size: "$comments" },
+          totalPosts: { $size: "$posts" },
         },
       },
       {
@@ -329,6 +331,7 @@ export const getUserProfile = async (req, res) => {
           totalViews: 1,
           totalLikes: 1,
           totalComments: 1,
+          totalPosts: 1,
         },
       },
     ]);
@@ -349,6 +352,7 @@ export const getUserProfile = async (req, res) => {
     return errorResponse(res, err, "Failed to retrieve user profile", 500);
   }
 };
+
 export const updateUserProfile = async (req, res) => {
   try {
     const userId = req.user.id;

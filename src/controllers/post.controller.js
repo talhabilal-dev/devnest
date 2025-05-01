@@ -68,38 +68,51 @@ export const createPost = async (req, res) => {
 
 export const getPosts = async (req, res) => {
   try {
-    const userId = req.user._id; // Assuming the user is authenticated, and their ID is stored in the request (e.g., from a JWT)
+    const userId = req.user.id;
+    const isAdmin = req.user.role === 1;
 
-    // Get posts
-    const posts = await Post.find()
-      .populate("author", "name email username profilePicture")
-      .sort({ createdAt: -1 });
+    const matchStage = isAdmin
+      ? {}
+      : { author: new mongoose.Types.ObjectId(userId) };
 
-    // If no posts found, return error
-    if (!posts || posts.length === 0) {
-      return errorResponse(res, null, "No posts found", 404);
+    const posts = await Post.aggregate([
+      { $match: matchStage },
+      { $sort: { createdAt: -1 } },
+      {
+        $lookup: {
+          from: "comments",
+          localField: "_id",
+          foreignField: "postId",
+          as: "comments",
+        },
+      },
+      {
+        $addFields: {
+          totalComments: { $size: "$comments" },
+        },
+      },
+      {
+        $project: {
+          title: 1,
+          content: 1,
+          views: 1,
+          likes: 1,
+          totalComments: 1,
+          createdAt: 1,
+        },
+      },
+    ]);
+
+    if (!posts.length) {
+      return errorResponse(
+        res,
+        null,
+        isAdmin ? "No posts found" : "No posts found for this user",
+        404
+      );
     }
 
-    // Filter posts
-    const filteredPosts = posts
-      .map((post) => {
-        if (post.author.toString() === userId.toString() || post.published) {
-          // Show all posts for the author or if the post is published
-          const { views, ...restOfPost } = post.toObject(); // Remove views field
-          return restOfPost;
-        }
-        // If the user is not the author and post is not published, hide the post
-        return null;
-      })
-      .filter((post) => post !== null); // Remove null values (non-published posts for non-authors)
-
-    // Return filtered posts
-    return successResponse(
-      res,
-      filteredPosts,
-      "Posts retrieved successfully",
-      200
-    );
+    return successResponse(res, posts, "Posts retrieved successfully", 200);
   } catch (error) {
     return errorResponse(res, error.message, "Internal Server Error", 500);
   }
