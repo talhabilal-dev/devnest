@@ -7,6 +7,12 @@ import {
   deleteFileFromCloudinary,
 } from "../utils/cloudinary.js";
 import mongoose from "mongoose";
+import ENV from "../config/env.config.js";
+import { GoogleGenAI } from "@google/genai";
+
+const client = new GoogleGenAI({
+  apiKey: ENV.GEMINI_API_KEY,
+});
 
 export const createPost = async (req, res) => {
   const { title, content, tags, category } = req.body;
@@ -104,8 +110,7 @@ export const getPosts = async (req, res) => {
       },
     ]);
 
-
-    if (posts.length===0) {
+    if (posts.length === 0) {
       return errorResponse(
         res,
         null,
@@ -205,5 +210,41 @@ export const deletePost = async (req, res) => {
     return successResponse(res, 200, "Post deleted successfully", post);
   } catch (error) {
     return errorResponse(res, 500, "Internal Server Error", error.message);
+  }
+};
+
+export const generatePost = async (req, res) => {
+  try {
+    const { topic, tone, length, keywords } = req.body;
+
+    const prompt = `Write a ${length}-word ${tone} blog about ${topic} with keywords: ${keywords}.`;
+    if (!topic || !tone || !length || !keywords) {
+      return errorResponse(
+        res,
+        null,
+        "Topic, tone, length, and keywords are required",
+        400
+      );
+    }
+    const response = await client.models.generateContent({
+      model: "gemini-2.0-flash",
+      contents: [
+        {
+          text: prompt,
+          type: "text",
+        },
+      ],
+    });
+
+const generatedContent = response.candidates[0].content;
+console.log(generatedContent);
+    return successResponse(
+      res,
+      generatedContent,
+      "Response generated successfully",
+      200
+    );
+  } catch (error) {
+    return errorResponse(res, error.message, "Internal Server Error", 500);
   }
 };
