@@ -226,6 +226,36 @@ export const generatePost = async (req, res) => {
         400
       );
     }
+
+    const userId = req.user.id;
+
+    const isAdmin = req.user.role === 1;
+
+    const user = await Post.findById(userId);
+
+    if (!user) {
+      return errorResponse(res, null, "User not found", 404);
+    }
+    if (user.role !== 1) {
+      return errorResponse(
+        res,
+        null,
+        "You are not authorized to generate posts",
+        403
+      );
+    }
+
+    // Check if the user has reached the limit of 5 posts
+
+    if (user.creddits < 5) {
+      return errorResponse(
+        res,
+        null,
+        "You have reached the limit of 5 posts",
+        403
+      );
+    }
+
     const response = await client.models.generateContent({
       model: "gemini-2.0-flash",
       contents: [
@@ -235,6 +265,14 @@ export const generatePost = async (req, res) => {
         },
       ],
     });
+
+    if (!response || !response.candidates || response.candidates.length === 0) {
+      return errorResponse(res, null, "Failed to generate content", 500);
+    }
+
+    // Decrease the user's creddits by 1
+    user.creddits -= 1;
+    await user.save();
 
     const generatedContent = response.candidates[0].content;
     console.log(generatedContent);
