@@ -236,8 +236,8 @@ export const generatePost = async (req, res) => {
       ],
     });
 
-const generatedContent = response.candidates[0].content;
-console.log(generatedContent);
+    const generatedContent = response.candidates[0].content;
+    console.log(generatedContent);
     return successResponse(
       res,
       generatedContent,
