@@ -10,7 +10,6 @@ cloudinary.config({
 
 export const cloudinaryUpload = async (
   localFilePath,
-  folder = "profile_pictures"
 ) => {
   try {
     const response = await cloudinary.uploader.upload(localFilePath, {

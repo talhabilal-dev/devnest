@@ -37,8 +37,9 @@ const authMiddleware = (req, res, next) => {
 };
 
 const verifyEmail = (req, res, next) => {
+  console.log(req.user);
   authMiddleware(req, res, () => {
-    if (!req.user.isEmailVerified) {
+    if (!req.user.isVerified) {
       return errorResponse(
         res,
         new Error("Email not verified"),

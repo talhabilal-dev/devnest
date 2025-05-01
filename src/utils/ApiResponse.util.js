@@ -17,11 +17,10 @@ const errorResponse = (
   message = "Something went wrong",
   statusCode = 500
 ) => {
-  console.error(error);
   res.status(statusCode).json({
     success: false,
     message,
-    error: error.message || error,
+    error: error.message || error || "Internal Server Error",
   });
 };
 

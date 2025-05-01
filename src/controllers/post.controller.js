@@ -6,6 +6,7 @@ import {
   cloudinaryUpload,
   deleteFileFromCloudinary,
 } from "../utils/cloudinary.js";
+import mongoose from "mongoose";
 
 export const createPost = async (req, res) => {
   const { title, content, tags, category } = req.body;
@@ -103,7 +104,8 @@ export const getPosts = async (req, res) => {
       },
     ]);
 
-    if (!posts.length) {
+
+    if (posts.length===0) {
       return errorResponse(
         res,
         null,
@@ -114,7 +116,7 @@ export const getPosts = async (req, res) => {
 
     return successResponse(res, posts, "Posts retrieved successfully", 200);
   } catch (error) {
-    return errorResponse(res, error.message, "Internal Server Error", 500);
+    return errorResponse(res, null, "Internal Server Error", 500);
   }
 };
 

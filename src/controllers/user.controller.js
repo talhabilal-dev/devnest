@@ -66,9 +66,7 @@ export const registerUser = async (req, res) => {
       );
     }
 
-    const response1 = await cloudinaryUpload(profilePictureLocalPath, {
-      folder: "profile_pictures",
-    });
+    const response1 = await cloudinaryUpload(profilePictureLocalPath);
 
     console.log("Cloudinary response:", response1);
 
