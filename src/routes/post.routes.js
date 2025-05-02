@@ -15,7 +15,7 @@ const router = Router();
 // router.use(authMiddleware);
 // router.use(verifyEmail);
 
-router.post("/", upload.single("coverImage"), createPost);
+router.post("/", upload.single("featuredImage"), createPost);
 router.get("/", getPosts);
 router.get("/:id", getPostById);
 router.put("/:id", updatePost);

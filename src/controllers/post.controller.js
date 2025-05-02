@@ -16,26 +16,24 @@ const client = new GoogleGenAI({
 });
 
 export const createPost = async (req, res) => {
-  const { title, content, tags, category } = req.body;
+  const { title, content, tags, category, status, commentsEnabled, featured } =
+    req.body;
 
   const author = req.user.id;
 
-  const coverImage = req.file ? req.file.path : null;
+  const featuredImage = req.file ? req.file.path : null;
 
-  if (!coverImage) {
-    return errorResponse(res, null, "Cover image is required", 400);
+  if (!featuredImage) {
+    return errorResponse(res, null, "Featured image is required", 400);
   }
 
-  const imageUploadResult = await cloudinaryUpload(coverImage);
+  const imageUploadResult = await cloudinaryUpload(featuredImage);
   if (imageUploadResult.error) {
     return errorResponse(res, null, imageUploadResult.error.message, 400);
   }
 
   const imageUrl = imageUploadResult.secure_url;
   const imagePublicId = imageUploadResult.public_id;
-
-  const published = false; // Default to false when creating a post
-  const publishedAt = null; // Default to null when creating a post
 
   const slug = slugify(title, { lower: true, strict: true });
 
