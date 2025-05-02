@@ -20,7 +20,7 @@ const errorResponse = (
   res.status(statusCode).json({
     success: false,
     message,
-    error: error.message || error || "Internal Server Error",
+    error: message || error || "Internal Server Error",
   });
 };
 

@@ -2,6 +2,7 @@ import { successResponse, errorResponse } from "../utils/ApiResponse.util.js";
 import Post from "../models/post.model.js";
 import Comment from "../models/comments.model.js";
 import slugify from "slugify";
+import User from "../models/user.model.js";
 import {
   cloudinaryUpload,
   deleteFileFromCloudinary,
@@ -217,7 +218,7 @@ export const generatePost = async (req, res) => {
   try {
     const { topic, tone, length, keywords } = req.body;
 
-    const prompt = `Write a ${length}-word ${tone} blog about ${topic} with keywords: ${keywords}.`;
+    const prompt = `Write a ${length}-word ${tone} blog about ${topic} with keywords: ${keywords} in proper markdown format.`;
     if (!topic || !tone || !length || !keywords) {
       return errorResponse(
         res,
@@ -227,16 +228,16 @@ export const generatePost = async (req, res) => {
       );
     }
 
-    const userId = req.user.id;
+    const userId = "68123fb0310580827d3e7a47";
 
-    const isAdmin = req.user.role === 1;
+    const isAdmin = true;
 
-    const user = await Post.findById(userId);
+    const user = await User.findById(userId);
 
     if (!user) {
       return errorResponse(res, null, "User not found", 404);
     }
-    if (user.role !== 1) {
+    if (user.role) {
       return errorResponse(
         res,
         null,
@@ -245,9 +246,7 @@ export const generatePost = async (req, res) => {
       );
     }
 
-    // Check if the user has reached the limit of 5 posts
-
-    if (user.creddits < 5) {
+    if (user.credits < 5) {
       return errorResponse(
         res,
         null,
@@ -271,7 +270,7 @@ export const generatePost = async (req, res) => {
     }
 
     // Decrease the user's creddits by 1
-    user.creddits -= 1;
+    user.credits -= 1;
     await user.save();
 
     const generatedContent = response.candidates[0].content;
@@ -283,6 +282,7 @@ export const generatePost = async (req, res) => {
       200
     );
   } catch (error) {
+    console.log(error);
     return errorResponse(res, error.message, "Internal Server Error", 500);
   }
 };

@@ -12,6 +12,14 @@ const postSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    credits: { type: Number, default: 5 }, // optional credits field
+    comments: [
+      {
+        user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        comment: { type: String },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
     views: { type: Number, default: 0 },
     likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     tags: [{ type: String }], // optional tags

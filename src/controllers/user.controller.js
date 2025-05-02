@@ -602,3 +602,31 @@ export const verifyEmail = async (req, res) => {
     return errorResponse(res, err, "Failed to verify email", 500);
   }
 };
+
+export const deleteUser = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const deletedUser =
+      await User.findByIdAndDelete(userId).select("-password");
+
+    if (!deletedUser) {
+      return errorResponse(
+        res,
+        new Error("User not found"),
+        "User not found",
+        404
+      );
+    }
+    if (deletedUser.profilePicturePublicId) {
+      await deleteFileFromCloudinary(
+        deletedUser.profilePicturePublicId,
+        "image"
+      );
+    }
+
+    return successResponse(res, deletedUser, "User deleted successfully");
+  } catch (err) {
+    return errorResponse(res, err, "Failed to delete user", 500);
+  }
+};
