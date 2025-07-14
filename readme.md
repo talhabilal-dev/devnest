@@ -108,3 +108,89 @@ This project is licensed under the [MIT License](LICENSE).
 ## Contact
 
 For questions or feedback, please reach out to [contact@talhabilal.dev].
+
+
+
+
+flowchart TD
+    A[Landing Page] --> B{User Authenticated?}
+    B -->|No| C[Sign Up/Login]
+    B -->|Yes| D[Dashboard]
+    
+    C --> E[Authentication System]
+    E --> F[Email Verification]
+    F --> G[User Profile Setup]
+    G --> D
+    
+    D --> H[Subscription Status Check]
+    H -->|Free Trial| I[Trial Dashboard]
+    H -->|Active Subscription| J[Full Dashboard]
+    H -->|Expired/No Sub| K[Billing Page]
+    
+    I --> L[Feature Access Control]
+    J --> L
+    K --> M[Payment Processing]
+    M --> N[Stripe Integration]
+    N --> O{Payment Success?}
+    O -->|Yes| P[Subscription Activated]
+    O -->|No| Q[Payment Failed]
+    Q --> K
+    P --> J
+    
+    L --> R[Core SaaS Features]
+    R --> S[API Routes]
+    S --> T[Database Operations]
+    T --> U[(Database)]
+    
+    D --> V[Account Settings]
+    V --> W[Profile Management]
+    V --> X[Billing Management]
+    V --> Y[Team Management]
+    
+    X --> Z[Subscription Plans]
+    Z --> AA[Upgrade/Downgrade]
+    AA --> N
+    
+    Y --> BB[Invite Users]
+    BB --> CC[Role Management]
+    CC --> DD[Permissions System]
+    
+    subgraph "Tech Stack"
+        EE[Next.js App Router]
+        FF[React Components]
+        GG[TypeScript]
+        HH[Tailwind CSS]
+        II[Prisma ORM]
+        JJ[NextAuth.js]
+        KK[Stripe API]
+        LL[Email Service]
+    end
+    
+    subgraph "Database Schema"
+        MM[Users Table]
+        NN[Subscriptions Table]
+        OO[Teams Table]
+        PP[Features Table]
+        QQ[Usage Analytics]
+    end
+    
+    subgraph "Deployment"
+        RR[Vercel Hosting]
+        SS[Environment Variables]
+        TT[CI/CD Pipeline]
+        UU[Monitoring & Analytics]
+    end
+    
+    subgraph "API Architecture"
+        VV[/api/auth/*]
+        WW[/api/billing/*]
+        XX[/api/users/*]
+        YY[/api/teams/*]
+        ZZ[/api/features/*]
+    end
+    
+    style A fill:#e1f5fe
+    style D fill:#e8f5e8
+    style K fill:#fff3e0
+    style M fill:#fce4ec
+    style U fill:#f3e5f5
